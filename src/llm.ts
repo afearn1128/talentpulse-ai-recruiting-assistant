@@ -15,10 +15,21 @@ export async function runChat(
     max_tokens: 1024,
   });
 
-// Workers AI chat responses expose the text on `.response`
-// (shape can vary slightly by model; this handles the common case).
-const text = (response as { response?: string }).response;
-  return text?.trim() ?? "";
+const raw = response as {
+  response?: unknown;
+  choices?: Array<{ message?: { content?: unknown } }>;
+};
+
+// Prefer `choices[0].message.content`, which is always the raw string. The
+// convenience `response` field is pre-parsed into an object whenever the model
+// emits valid JSON, so it is not reliably a string.
+const content = raw.choices?.[0]?.message?.content;
+if (typeof content === "string") return content.trim();
+
+const text = raw.response;
+if (typeof text === "string") return text.trim();
+if (text === undefined || text === null) return "";
+return JSON.stringify(text);
 }
 
 /**
