@@ -1,0 +1,28 @@
+name = "talentpulse-ai-recruiting-assistant"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# --- LLM: Workers AI (Llama 3.3) ---
+[ai]
+binding = "AI"
+
+# --- Memory / state: one Durable Object per conversation ---
+[[durable_objects.bindings]]
+name = "CONVERSATION_MEMORY"
+class_name = "ConversationMemory"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ConversationMemory"]
+
+# --- Workflow / coordination: multi-step screening pipeline ---
+[[workflows]]
+name = "screening-workflow"
+binding = "SCREENING_WORKFLOW"
+class_name = "ScreeningWorkflow"
+
+# --- Chat UI: static assets served directly by the Worker ---
+[assets]
+directory = "./public"
+binding = "ASSETS"
