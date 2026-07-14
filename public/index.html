@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalentPulse — AI Recruiting Assistant</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>TalentPulse</h1>
+      <p>AI-powered candidate screening assistant, built on Cloudflare Workers AI</p>
+    </header>
+
+    <main>
+      <section class="chat-panel">
+        <div id="messages" class="messages"></div>
+        <form id="chat-form">
+          <input id="chat-input" type="text" placeholder="Type a message..." autocomplete="off" required />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+
+      <aside class="brief-panel">
+        <h2>Recruiter Brief</h2>
+        <p class="hint">Paste a job description, then generate a fit brief from the conversation so far.</p>
+        <textarea id="job-description" placeholder="Paste job description here..."></textarea>
+        <button id="generate-brief">Generate Brief</button>
+        <div id="brief-status"></div>
+        <pre id="brief-output"></pre>
+      </aside>
+    </main>
+  </div>
+
+  <script src="/chat.js"></script>
+</body>
+</html>
