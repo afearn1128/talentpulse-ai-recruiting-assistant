@@ -14,7 +14,8 @@ class_name = "ConversationMemory"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["ConversationMemory"]
+# SQLite-backed storage; required for Durable Objects on the free plan.
+new_sqlite_classes = ["ConversationMemory"]
 
 # --- Workflow / coordination: multi-step screening pipeline ---
 [[workflows]]
