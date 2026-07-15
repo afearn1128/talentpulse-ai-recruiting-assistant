@@ -7,6 +7,21 @@ const briefStatusEl = document.getElementById("brief-status");
 const briefOutputEl = document.getElementById("brief-output");
 const newConvBtn = document.getElementById("new-conversation");
 
+// Identifies the current brief run. Bumping it orphans any in-flight poll, which
+// would otherwise write a stale brief back into a panel that was just cleared.
+let briefRunId = 0;
+let briefTimer = null;
+
+function clearBriefPanel() {
+  briefRunId++;
+  if (briefTimer !== null) {
+    clearTimeout(briefTimer);
+    briefTimer = null;
+  }
+  briefStatusEl.textContent = "";
+  briefOutputEl.textContent = "";
+}
+
 function renderMessage(role, content) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
@@ -56,8 +71,7 @@ newConvBtn.addEventListener("click", async () => {
 
     // The brief is derived from the conversation, so it is stale once cleared.
     messagesEl.innerHTML = "";
-    briefOutputEl.textContent = "";
-    briefStatusEl.textContent = "";
+    clearBriefPanel();
     inputEl.focus();
   } catch {
     briefStatusEl.textContent = "Could not clear the conversation. Please try again.";
@@ -67,19 +81,28 @@ newConvBtn.addEventListener("click", async () => {
 });
 
 briefBtn.addEventListener("click", async () => {
+  // Supersede any previous run, then claim this one.
+  clearBriefPanel();
+  const runId = briefRunId;
+  const isCurrent = () => runId === briefRunId;
+
   briefStatusEl.textContent = "Starting screening workflow...";
-  briefOutputEl.textContent = "";
 
   const startRes = await fetch("/api/screen", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jobDescription: jobDescEl.value }),
   });
+  if (!isCurrent()) return;
   const { workflowInstanceId } = await startRes.json();
+  if (!isCurrent()) return;
 
   const poll = async () => {
+    if (!isCurrent()) return;
     const statusRes = await fetch(`/api/screen/${workflowInstanceId}/status`);
     const status = await statusRes.json();
+    // The conversation may have been cleared while this request was in flight.
+    if (!isCurrent()) return;
 
     if (status.status === "complete") {
       briefStatusEl.textContent = "Done.";
@@ -91,7 +114,7 @@ briefBtn.addEventListener("click", async () => {
       return;
     }
     briefStatusEl.textContent = `Status: ${status.status}...`;
-    setTimeout(poll, 2000);
+    briefTimer = setTimeout(poll, 2000);
   };
 
   poll();
