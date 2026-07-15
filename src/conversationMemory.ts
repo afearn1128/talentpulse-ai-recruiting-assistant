@@ -23,6 +23,11 @@ async saveState(state: ConversationState): Promise<void> {
   await this.ctx.storage.put("state", state);
 }
 
+/** Permanently deletes this conversation's message history and extracted profile. */
+async clear(): Promise<void> {
+  await this.ctx.storage.deleteAll();
+}
+
 /** Appends a user message, generates an assistant reply, and updates the candidate profile. */
 async sendMessage(userMessage: string): Promise<ConversationState> {
   const state = await this.getState();
@@ -59,6 +64,11 @@ async fetch(request: Request): Promise<Response> {
   if (url.pathname.endsWith("/history") && request.method === "GET") {
     const state = await this.getState();
     return Response.json(state);
+  }
+
+  if (url.pathname.endsWith("/reset") && request.method === "POST") {
+    await this.clear();
+    return Response.json(await this.getState());
   }
 
   return new Response("Not found", { status: 404 });

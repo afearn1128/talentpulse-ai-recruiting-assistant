@@ -86,6 +86,17 @@ export default {
               return new Response(res.body, { status: res.status, headers });
       }
 
+      // --- POST /api/reset  (clears stored history + profile) ---
+      if (url.pathname === "/api/reset" && request.method === "POST") {
+              const { id, setCookie } = getOrCreateConversationId(request);
+              const doId = env.CONVERSATION_MEMORY.idFromName(id);
+              const stub = env.CONVERSATION_MEMORY.get(doId);
+              const res = await stub.fetch("https://do/reset", { method: "POST" });
+              const headers = new Headers(res.headers);
+              if (setCookie) headers.set("Set-Cookie", setCookie);
+              return new Response(res.body, { status: res.status, headers });
+      }
+
       // --- POST /api/screen  { jobDescription: string } ---
       if (url.pathname === "/api/screen" && request.method === "POST") {
               const { id } = getOrCreateConversationId(request);

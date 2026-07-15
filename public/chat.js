@@ -5,6 +5,7 @@ const briefBtn = document.getElementById("generate-brief");
 const jobDescEl = document.getElementById("job-description");
 const briefStatusEl = document.getElementById("brief-status");
 const briefOutputEl = document.getElementById("brief-output");
+const newConvBtn = document.getElementById("new-conversation");
 
 function renderMessage(role, content) {
   const div = document.createElement("div");
@@ -37,6 +38,32 @@ formEl.addEventListener("submit", async (e) => {
   const state = await res.json();
   const last = state.messages[state.messages.length - 1];
   if (last?.role === "assistant") renderMessage("assistant", last.content);
+});
+
+newConvBtn.addEventListener("click", async () => {
+  const confirmed = confirm(
+    "Start a new conversation? The stored message history and extracted candidate profile will be permanently deleted."
+  );
+  if (!confirmed) return;
+
+  newConvBtn.disabled = true;
+  try {
+    const res = await fetch("/api/reset", { method: "POST" });
+    if (!res.ok) {
+      briefStatusEl.textContent = "Could not clear the conversation. Please try again.";
+      return;
+    }
+
+    // The brief is derived from the conversation, so it is stale once cleared.
+    messagesEl.innerHTML = "";
+    briefOutputEl.textContent = "";
+    briefStatusEl.textContent = "";
+    inputEl.focus();
+  } catch {
+    briefStatusEl.textContent = "Could not clear the conversation. Please try again.";
+  } finally {
+    newConvBtn.disabled = false;
+  }
 });
 
 briefBtn.addEventListener("click", async () => {
