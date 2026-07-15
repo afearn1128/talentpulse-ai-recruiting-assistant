@@ -27,3 +27,6 @@ class_name = "ScreeningWorkflow"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+# Route every request through the Worker so the auth check runs. Without this
+# the edge serves static files directly and the UI bypasses authentication.
+run_worker_first = true

@@ -3,6 +3,45 @@ import type { Env } from "./types";
 export { ConversationMemory } from "./conversationMemory";
 export { ScreeningWorkflow } from "./screeningWorkflow";
 
+function unauthorized(): Response {
+    return new Response("Authentication required.", {
+        status: 401,
+        headers: { "WWW-Authenticate": 'Basic realm="TalentPulse", charset="UTF-8"' },
+    });
+}
+
+/**
+ * Gates the whole Worker behind a shared Basic Auth password.
+ *
+ * Fails closed: if AUTH_PASSWORD is unset, nothing is reachable, so a missing
+ * secret cannot silently expose the AI endpoints.
+ */
+function isAuthorized(request: Request, env: Env): boolean {
+    const expected = env.AUTH_PASSWORD;
+    if (!expected) return false;
+
+    const header = request.headers.get("Authorization");
+    if (!header?.startsWith("Basic ")) return false;
+
+    let decoded: string;
+    try {
+        decoded = atob(header.slice("Basic ".length));
+    } catch {
+        return false;
+    }
+
+    // Basic Auth sends "user:password"; the username is unused.
+    const separator = decoded.indexOf(":");
+    if (separator === -1) return false;
+
+    const supplied = new TextEncoder().encode(decoded.slice(separator + 1));
+    const secret = new TextEncoder().encode(expected);
+
+    // timingSafeEqual throws unless both views are the same length.
+    if (supplied.byteLength !== secret.byteLength) return false;
+    return crypto.subtle.timingSafeEqual(supplied, secret);
+}
+
 function getOrCreateConversationId(request: Request): { id: string; setCookie?: string } {
     const cookie = request.headers.get("Cookie") ?? "";
     const match = cookie.match(/conversationId=([a-zA-Z0-9-]+)/);
@@ -14,6 +53,8 @@ function getOrCreateConversationId(request: Request): { id: string; setCookie?: 
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
+          if (!isAuthorized(request, env)) return unauthorized();
+
           const url = new URL(request.url);
 
       // --- POST /api/chat  { message: string } ---

@@ -6,6 +6,8 @@ export interface Env {
   CONVERSATION_MEMORY: DurableObjectNamespace<ConversationMemory>;
   SCREENING_WORKFLOW: Workflow;
   ASSETS: Fetcher;
+  /** Shared Basic Auth password. Set via `wrangler secret put AUTH_PASSWORD`. */
+  AUTH_PASSWORD?: string;
 }
 
 export interface ChatMessage {
