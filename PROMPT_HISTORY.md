@@ -133,6 +133,17 @@ All four workflow steps then completed locally against real Workers AI.
 > "Push these commits to GitHub, then deploy the app to Cloudflare with wrangler
 > deploy and give me the live URL."
 
+**Tooling note — mangled commit messages, caught before pushing.** The Stage 1 and
+Stage 4 commits were first written by passing a PowerShell here-string (`@'...'@`) to
+`git commit -m` from a Bash shell. Bash has no here-string syntax, so it read the `@`
+characters as part of the argument and folded them into the message — leaving a stray
+`@` as the subject line and another trailing the body of both commits. `git log`
+surfaced it. Nothing had been pushed yet, so the two commits were rewritten with
+`git reset --mixed` and recreated using a real heredoc (`git commit -F - <<'EOF'`),
+which is the correct way to pass multi-line messages in this shell. The mangled
+messages never reached GitHub; the SHAs cited elsewhere in this document are the
+rewritten ones. Every commit message after this point used the heredoc form.
+
 The deploy took three attempts, each blocked by a different issue:
 
 **Blocker 1 — Durable Objects on the free plan.** The first `wrangler deploy` was
